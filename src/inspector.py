@@ -7,6 +7,12 @@ from aqt.qt import *
 
 TITLE = 'web dev tools'
 FONT_SIZE = 12
+QDOCKWIDGET_STYLE = '''
+    QDockWidget::title {
+        padding-top: 0;
+        padding-bottom: 0;
+    }
+'''
 
 
 class Inspector(QDockWidget):
@@ -18,6 +24,8 @@ class Inspector(QDockWidget):
         self.setAllowedAreas(
             Qt.LeftDockWidgetArea|Qt.RightDockWidgetArea|Qt.BottomDockWidgetArea)
         self.toggleViewAction().setText(f'show/hide "{title}"')
+        # make the title bar thinner
+        self.setStyleSheet(QDOCKWIDGET_STYLE)
         self.web = None
 
     def setup_web(self, page):
