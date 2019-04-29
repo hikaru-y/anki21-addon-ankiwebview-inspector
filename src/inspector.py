@@ -64,7 +64,6 @@ class Inspector(QDockWidget):
         self.setFloating(False)
         self.show()
 
-    @pyqtSlot()
     def on_anki_state_change(self, *_):
         """
         パネルを閉じた状態でAnkiのstateが変わったらwebをdelete
