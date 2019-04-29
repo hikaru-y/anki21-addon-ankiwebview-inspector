@@ -9,7 +9,7 @@ TITLE = 'web dev tools'
 FONT_SIZE = 12
 
 
-class WebDevToolsPane(QDockWidget):
+class Inspector(QDockWidget):
     """ dockable web dev tools pane """
 
     def __init__(self, title, parent=None):
@@ -77,7 +77,7 @@ def main():
     if not check_qt_version():
         return
 
-    pane = WebDevToolsPane(TITLE, mw)
+    pane = Inspector(TITLE, mw)
     mw.addDockWidget(Qt.RightDockWidgetArea, pane)
 
     # メインウィンドウ起動時にはパネルを閉じておく
