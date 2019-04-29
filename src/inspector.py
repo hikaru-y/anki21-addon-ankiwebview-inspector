@@ -5,7 +5,7 @@ from aqt import mw
 from aqt.qt import *
 
 
-TITLE = 'web dev tools'
+ADDON = 'AnkiWebView Inspector'
 CONTEXT_MENU_ITEM_NAME = 'Inspect'
 FONT_SIZE = 12
 QDOCKWIDGET_STYLE = '''
@@ -21,7 +21,7 @@ class Inspector(QDockWidget):
 
     def __init__(self, title, parent=None):
         super().__init__(title, parent)
-        self.setObjectName(title)
+        self.setObjectName(ADDON)
         self.setAllowedAreas(
             Qt.LeftDockWidgetArea|Qt.RightDockWidgetArea|Qt.BottomDockWidgetArea)
         self.toggleViewAction().setText(f'show/hide "{title}"')
