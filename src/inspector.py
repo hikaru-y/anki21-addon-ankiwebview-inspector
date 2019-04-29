@@ -6,6 +6,7 @@ from aqt.qt import *
 
 
 TITLE = 'web dev tools'
+CONTEXT_MENU_ITEM_NAME = 'Inspect'
 FONT_SIZE = 12
 QDOCKWIDGET_STYLE = '''
     QDockWidget::title {
@@ -27,6 +28,19 @@ class Inspector(QDockWidget):
         # make the title bar thinner
         self.setStyleSheet(QDOCKWIDGET_STYLE)
         self.web = None
+        self.setup_hooks()
+
+    def setup_hooks(self):
+        # メインウィンドウ起動時にはパネルを閉じておく
+        addHook('profileLoaded', self.hide)
+        # プロファイル切り替え時にwebをdelete
+        addHook('unloadProfile', self.delete_web)
+        addHook('AnkiWebView.contextMenuEvent', self.on_context_menu_event)
+        addHook('EditorWebView.contextMenuEvent', self.on_context_menu_event)
+        addHook('beforeStateChange', self.on_anki_state_change)
+
+    def on_context_menu_event(self, web, menu):
+        menu.addAction(CONTEXT_MENU_ITEM_NAME, lambda: self.setup_web(web.page()))
 
     def setup_web(self, page):
         if self.web:
@@ -62,14 +76,6 @@ class Inspector(QDockWidget):
             self.web = None
 
 
-def on_contextMenuEvent(self, menu, pane):
-    def handler():
-        pane.setup_web(self.page())
-
-    a = menu.addAction(f'{TITLE} - {self.title}')
-    a.triggered.connect(handler)
-
-
 def check_qt_version():
     """
     setInspectedPage, setDevToolsPageはQt5.11以降対応なのでチェックする
@@ -87,16 +93,6 @@ def main():
 
     pane = Inspector(TITLE, mw)
     mw.addDockWidget(Qt.RightDockWidgetArea, pane)
-
-    # メインウィンドウ起動時にはパネルを閉じておく
-    addHook('profileLoaded', pane.hide)
-    # プロファイル切り替え時にwebをdelete
-    addHook('unloadProfile', pane.delete_web)
-    addHook('AnkiWebView.contextMenuEvent',
-            lambda *args, pane=pane: on_contextMenuEvent(*args, pane))
-    addHook('EditorWebView.contextMenuEvent',
-            lambda *args, pane=pane: on_contextMenuEvent(*args, pane))
-    addHook('beforeStateChange', pane.on_anki_state_change)
 
 
 main()
