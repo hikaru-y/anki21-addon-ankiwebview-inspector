@@ -60,6 +60,8 @@ class Inspector(QDockWidget):
 
         self.web.page().setInspectedPage(page)
         self.setWidget(self.web)
+        # make sure the panel is docked to main window when displaying
+        self.setFloating(False)
         self.show()
 
     @pyqtSlot()
