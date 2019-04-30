@@ -17,7 +17,9 @@ QDOCKWIDGET_STYLE = '''
 
 
 class Inspector(QDockWidget):
-    """ dockable web dev tools pane """
+    """
+    Dockable panel with Qt WebEngine Developer Tools
+    """
 
     def __init__(self, title, parent=None):
         super().__init__(title, parent)
