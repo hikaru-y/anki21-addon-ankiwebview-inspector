@@ -26,7 +26,7 @@ class Inspector(QDockWidget):
         self.setObjectName(ADDON)
         self.setAllowedAreas(
             Qt.LeftDockWidgetArea|Qt.RightDockWidgetArea|Qt.BottomDockWidgetArea)
-        self.toggleViewAction().setText(f'show/hide "{title}"')
+        self.toggleViewAction().setText('Toggle Inspector')
         # make the title bar thinner
         self.setStyleSheet(QDOCKWIDGET_STYLE)
         self.web = None
