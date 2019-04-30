@@ -92,8 +92,8 @@ def main():
     if not check_qt_version():
         return
 
-    pane = Inspector(TITLE, mw)
-    mw.addDockWidget(Qt.RightDockWidgetArea, pane)
+    inspector = Inspector('', mw)
+    mw.addDockWidget(Qt.RightDockWidgetArea, inspector)
 
 
 main()
