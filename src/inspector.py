@@ -48,6 +48,7 @@ class Inspector(QDockWidget):
         if self.web:
             self.web.deleteLater()
         self.web = QWebEngineView(mw)
+        self.web.setMinimumWidth(240)
 
         # font size
         ws = self.web.settings()
