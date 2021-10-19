@@ -25,7 +25,10 @@ class Inspector(QDockWidget):
         super().__init__(title, parent)
         self.setObjectName(ADDON)
         self.setAllowedAreas(
-            Qt.DockWidgetArea.LeftDockWidgetArea|Qt.DockWidgetArea.RightDockWidgetArea|Qt.DockWidgetArea.BottomDockWidgetArea)
+              Qt.DockWidgetArea.LeftDockWidgetArea
+            | Qt.DockWidgetArea.RightDockWidgetArea
+            | Qt.DockWidgetArea.BottomDockWidgetArea
+        )
         self.toggleViewAction().setText('Toggle Inspector')
         # make the title bar thinner
         self.setStyleSheet(QDOCKWIDGET_STYLE)
@@ -84,11 +87,8 @@ def check_qt_version():
     """
     setInspectedPage, setDevToolsPageはQt5.11以降対応なのでチェックする
     """
-    qt_ver = QT_VERSION_STR.split('.')
-    if int(qt_ver[1]) < 11:
-        return False
-    else:
-        return True
+    qt_major_ver, qt_minor_ver = [int(string) for string in QT_VERSION_STR.split('.')][:2]
+    return (qt_major_ver == 5 and qt_minor_ver >= 11) or qt_major_ver == 6
 
 
 def main():
