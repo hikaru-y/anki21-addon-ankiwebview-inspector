@@ -25,7 +25,7 @@ class Inspector(QDockWidget):
         super().__init__(title, parent)
         self.setObjectName(ADDON)
         self.setAllowedAreas(
-            Qt.LeftDockWidgetArea|Qt.RightDockWidgetArea|Qt.BottomDockWidgetArea)
+            Qt.DockWidgetArea.LeftDockWidgetArea|Qt.DockWidgetArea.RightDockWidgetArea|Qt.DockWidgetArea.BottomDockWidgetArea)
         self.toggleViewAction().setText('Toggle Inspector')
         # make the title bar thinner
         self.setStyleSheet(QDOCKWIDGET_STYLE)
@@ -52,9 +52,9 @@ class Inspector(QDockWidget):
 
         # font size
         ws = self.web.settings()
-        ws.setFontSize(QWebEngineSettings.MinimumFontSize, FONT_SIZE)
-        ws.setFontSize(QWebEngineSettings.MinimumLogicalFontSize, FONT_SIZE)
-        ws.setFontSize(QWebEngineSettings.DefaultFontSize, FONT_SIZE)
+        ws.setFontSize(QWebEngineSettings.FontSize.MinimumFontSize, FONT_SIZE)
+        ws.setFontSize(QWebEngineSettings.FontSize.MinimumLogicalFontSize, FONT_SIZE)
+        ws.setFontSize(QWebEngineSettings.FontSize.DefaultFontSize, FONT_SIZE)
 
         # "Uncaught ReferenceError: qt is not defined"を防ぐために
         # AnkiWebViewと同じwebChannelを使う
@@ -96,7 +96,7 @@ def main():
         return
 
     inspector = Inspector('', mw)
-    mw.addDockWidget(Qt.RightDockWidgetArea, inspector)
+    mw.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, inspector)
 
 
 main()
