@@ -1,0 +1,11 @@
+[tool.black]
+line-length = 88
+
+[tool.isort]
+# https://black.readthedocs.io/en/stable/the_black_code_style/current_style.html#how-black-wraps-lines
+profile = "black"
+known_first_party = ["anki", "aqt"]
+
+[tool.mypy]
+python_version = "3.9"
+disallow_untyped_defs = true
