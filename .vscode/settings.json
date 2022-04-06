@@ -1,0 +1,31 @@
+{
+    "[python]": {
+        "editor.codeActionsOnSave": {
+            "source.organizeImports": true
+        }
+    },
+    "files.eol": "\n",
+    "files.exclude": {
+        "**/__pycache__/": true,
+        "**/.git": true,
+        "**/.mypy_cache/": true
+    },
+    "files.insertFinalNewline": true,
+    "git.ignoreLimitWarning": true,
+    "git.untrackedChanges": "hidden",
+    "python.analysis.extraPaths": [
+        "C:/anki/qt/",
+        "C:/anki/pylib"
+    ],
+    "python.formatting.provider": "black",
+    "python.linting.enabled": true,
+    "python.linting.flake8Args": [
+        "--config=.flake8"
+    ],
+    "python.linting.flake8Enabled": true,
+    "python.linting.mypyEnabled": true,
+    "search.exclude": {
+        ".vscode/": true
+    },
+    "workbench.editor.enablePreview": false
+}
