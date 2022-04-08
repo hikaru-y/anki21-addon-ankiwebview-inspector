@@ -1,102 +1,183 @@
-# Copyright: (c) 2019 Hikaru Y. <hkrysg@gmail.com>
+from __future__ import annotations
 
-from anki.hooks import addHook
-from aqt import mw
-from aqt.qt import *
+from aqt import gui_hooks, mw, qt, webview
 
-
-ADDON = 'AnkiWebView Inspector'
-CONTEXT_MENU_ITEM_NAME = 'Inspect'
-FONT_SIZE = 12
-QDOCKWIDGET_STYLE = '''
-    QDockWidget::title {
-        padding-top: 0;
-        padding-bottom: 0;
-    }
-'''
+from .logger import log_widget_destroyed, logger
+from .utils import get_icon
+from .widgets import InspectorDock, InspectorSplitter
 
 
-class Inspector(QDockWidget):
-    """
-    Dockable panel with Qt WebEngine Developer Tools
-    """
+class BaseInspector(qt.QWidget):
+    inspected_page: webview.AnkiWebPage
+    label = qt.QLabel
 
-    def __init__(self, title, parent=None):
-        super().__init__(title, parent)
-        self.setObjectName(ADDON)
-        self.setAllowedAreas(
-            Qt.LeftDockWidgetArea|Qt.RightDockWidgetArea|Qt.BottomDockWidgetArea)
-        self.toggleViewAction().setText('Toggle Inspector')
-        # make the title bar thinner
-        self.setStyleSheet(QDOCKWIDGET_STYLE)
-        self.web = None
-        self.setup_hooks()
+    def __init__(self, parent: qt.QWidget) -> None:
+        super().__init__(parent)
+        self.setAttribute(qt.Qt.WidgetAttribute.WA_DeleteOnClose)
+        log_widget_destroyed(self)
+        self.webview = qt.QWebEngineView(self)
+        log_widget_destroyed(self.webview)
+        self.setup_layout()
 
-    def setup_hooks(self):
-        # メインウィンドウ起動時にはパネルを閉じておく
-        addHook('profileLoaded', self.hide)
-        # プロファイル切り替え時にwebをdelete
-        addHook('unloadProfile', self.delete_web)
-        addHook('AnkiWebView.contextMenuEvent', self.on_context_menu_event)
-        addHook('EditorWebView.contextMenuEvent', self.on_context_menu_event)
-        addHook('beforeStateChange', self.on_anki_state_change)
+    def setup_layout(self) -> None:
+        vbox = qt.QVBoxLayout()
+        vbox.setContentsMargins(0, 0, 0, 0)
+        vbox.setSpacing(0)
+        topbar = self.create_topbar()
+        vbox.addLayout(topbar)
+        vbox.addWidget(self.webview)
+        self.setLayout(vbox)
 
-    def on_context_menu_event(self, web, menu):
-        menu.addAction(CONTEXT_MENU_ITEM_NAME, lambda: self.setup_web(web.page()))
+    def set_page(self, inspected_page: webview.AnkiWebPage) -> None:
+        self.inspected_page = inspected_page
+        # web channel
+        channel = self.inspected_page.webChannel()
+        self.webview.page().setWebChannel(channel)
 
-    def setup_web(self, page):
-        if self.web:
-            self.web.deleteLater()
-        self.web = QWebEngineView(mw)
-        self.web.setMinimumWidth(240)
+        self.webview.loadFinished.connect(self.on_load_finished)
+        self.webview.page().setInspectedPage(self.inspected_page)
 
-        # font size
-        ws = self.web.settings()
-        ws.setFontSize(QWebEngineSettings.MinimumFontSize, FONT_SIZE)
-        ws.setFontSize(QWebEngineSettings.MinimumLogicalFontSize, FONT_SIZE)
-        ws.setFontSize(QWebEngineSettings.DefaultFontSize, FONT_SIZE)
+    @qt.pyqtSlot(bool)
+    def on_load_finished(self, ok: bool) -> None:
+        logger.debug("on_load_finished")
+        self._on_load_finished()
+        self.webview.loadFinished.disconnect(self.on_load_finished)
 
-        # "Uncaught ReferenceError: qt is not defined"を防ぐために
-        # AnkiWebViewと同じwebChannelを使う
-        channel = mw.web._page.webChannel()
-        self.web.page().setWebChannel(channel)
+    def _on_load_finished(self) -> None:
+        pass
 
-        self.web.page().setInspectedPage(page)
-        self.setWidget(self.web)
-        # make sure the panel is docked to main window when displaying
-        self.setFloating(False)
-        self.show()
+    @qt.pyqtSlot(int)
+    def on_zoom_spinbox_value_changed(self, value: int) -> None:
+        self.webview.setZoomFactor(value / 100)
+        # https://stackoverflow.com/questions/12892129/how-to-prevent-qspinbox-from-automatically-highlighting-contents
+        self.zoom_spinbox.lineEdit().deselect()
 
-    def on_anki_state_change(self, *_):
-        """
-        パネルを閉じた状態でAnkiのstateが変わったらwebをdelete
-        """
-        if self.isHidden():
-            self.delete_web()
-    
-    def delete_web(self):
-        if self.web:
-            self.web.deleteLater()
-            self.web = None
+    def create_topbar(self) -> qt.QHBoxLayout:
+        hbox = qt.QHBoxLayout()
+        hbox.setSpacing(4)
+        self.label = qt.QLabel(self)
+        hbox.addWidget(self.label)
+        hbox.addStretch()
+
+        # Zoom
+        self.zoom_spinbox = qt.QSpinBox(self)
+        self.zoom_spinbox.setFocusPolicy(qt.Qt.FocusPolicy.NoFocus)
+        self.zoom_spinbox.setRange(50, 150)
+        self.zoom_spinbox.setValue(100)
+        self.zoom_spinbox.setSingleStep(10)
+        self.zoom_spinbox.setToolTip("Zoom level")
+        self.zoom_spinbox.setSuffix(" %")
+        self.zoom_spinbox.valueChanged.connect(
+            self.on_zoom_spinbox_value_changed, qt.Qt.ConnectionType.QueuedConnection
+        )
+        hbox.addWidget(self.zoom_spinbox)
+
+        # Buttons
+        default_button_height = qt.QPushButton().sizeHint().height()
+        button_size = qt.QSize(default_button_height, default_button_height)
+
+        position_button = qt.QPushButton(self)
+        position_button.setFocusPolicy(qt.Qt.FocusPolicy.NoFocus)
+        position_button.setMaximumSize(button_size)
+        position_button.setIcon(get_icon("icon/position.svg"))
+        position_button.setToolTip("Toggle position (right/bottom)")
+        position_button.clicked.connect(self.on_position_button_clicked)
+        hbox.addWidget(position_button)
+
+        close_button = qt.QPushButton(self)
+        close_button.setFocusPolicy(qt.Qt.FocusPolicy.NoFocus)
+        close_button.setMaximumSize(button_size)
+        close_button.setIcon(get_icon("icon/close.svg"))
+        close_button.setToolTip("Close Inspector")
+        close_button.clicked.connect(self.on_close_button_clicked)
+        hbox.addWidget(close_button)
+
+        return hbox
+
+    def inspect_element(self) -> None:
+        self.inspected_page.triggerAction(qt.QWebEnginePage.WebAction.InspectElement)
+
+    def set_label(self, text: str) -> None:
+        self.label.setText(text)
+        self.label.setToolTip(text)
 
 
-def check_qt_version():
-    """
-    setInspectedPage, setDevToolsPageはQt5.11以降対応なのでチェックする
-    """
-    qt_ver = QT_VERSION_STR.split('.')
-    if int(qt_ver[1]) < 11:
-        return False
-    else:
-        return True
+class MainWindowInspector(BaseInspector):
+    def __init__(self) -> None:
+        self.dock = InspectorDock(mw)
+        super().__init__(parent=self.dock)
+
+        # https://doc.qt.io/qt-6/qdockwidget.html#appearance
+        # > Custom size hints, minimum and maximum sizes and size policies
+        # > should be implemented in the child widget.
+        self.webview.setMinimumSize(200, 200)
+
+        self.webview.urlChanged.connect(self.set_dock_title)
+        self.dock.setWidget(self)
+        self.inspected_page_changed = False
+
+        gui_hooks.profile_did_open.append(self.on_profile_did_open)
+        self.destroyed.connect(
+            lambda *_: gui_hooks.profile_did_open.remove(self.on_profile_did_open)
+        )
+
+    def on_profile_did_open(self) -> None:
+        # switching profiles with inspector open may hide dock widget
+        self.dock.show()
+
+    def _on_load_finished(self) -> None:
+        self.inspect_element()
+        if self.inspected_page_changed:
+            self.set_dock_title()
+        else:
+            self.add_dock_to_mw()
+
+    def add_dock_to_mw(self) -> None:
+        # It seems that this process needs to be done at the very end
+        # in order to accurately highlight the right-clicked element.
+        mw.addDockWidget(qt.Qt.DockWidgetArea.RightDockWidgetArea, self.dock)
+
+    def set_dock_title(self) -> None:
+        self.dock.setWindowTitle(self.inspected_page.title())
+
+    @qt.pyqtSlot()
+    def on_close_button_clicked(self) -> None:
+        self.dock.close()
+
+    @qt.pyqtSlot()
+    def on_position_button_clicked(self) -> None:
+        self.dock.toggle_area()
 
 
-def main():
-    if not check_qt_version():
-        return
+class SubWindowInspector(BaseInspector):
+    def __init__(
+        self,
+        window_widget: qt.QWidget,
+        target_widget: qt.QWidget,
+        original_pos: int,
+    ) -> None:
+        super().__init__(parent=window_widget)
+        self.window_widget = window_widget
+        self.target_widget = target_widget
 
-    inspector = Inspector('', mw)
-    mw.addDockWidget(Qt.RightDockWidgetArea, inspector)
+        # splitter
+        self.splitter = InspectorSplitter(self.window_widget)
+        self.splitter.addWidget(target_widget)
 
+        self.original_pos = original_pos
 
-main()
+    @qt.pyqtSlot()
+    def on_position_button_clicked(self) -> None:
+        self.splitter.toggle_orientation()
+
+    def _on_load_finished(self) -> None:
+        self.set_label(f"Inspector({self.inspected_page.title()})")
+        self.inspect_element()
+        self.splitter.addWidget(self)
+        self.splitter.equalize_sizes()
+
+    @qt.pyqtSlot()
+    def on_close_button_clicked(self) -> None:
+        self.close()
+        self.window_widget.layout().insertWidget(self.original_pos, self.target_widget)
+        self.splitter.close()
