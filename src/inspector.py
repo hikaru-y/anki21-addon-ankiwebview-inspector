@@ -169,17 +169,13 @@ class SubWindowInspector(BaseInspector):
         self.window_widget = window_widget
         self.target_widget = target_widget
 
-        # splitter
-        self.splitter = InspectorSplitter(self.window_widget)
-        self.splitter.addWidget(target_widget)
-
         self.original_pos = original_pos
+        self.isFloating = False
 
     def _on_load_finished(self) -> None:
         self.set_label(f"Inspector({self.inspected_page.title()})")
         self.inspect_element()
-        self.splitter.addWidget(self)
-        self.splitter.equalize_sizes()
+        self.setup_splitter()
 
     @qt.pyqtSlot()
     def on_close_button_clicked(self) -> None:
@@ -191,8 +187,47 @@ class SubWindowInspector(BaseInspector):
         menu = qt.QMenu(self)
         act_right = qt.QAction("Right", menu)
         act_bottom = qt.QAction("Bottom", menu)
-        act_right.triggered.connect(lambda: self.splitter.set_orientation("right"))
-        act_bottom.triggered.connect(lambda: self.splitter.set_orientation("bottom"))
+        act_float = qt.QAction("Float", menu)
+        act_right.triggered.connect(lambda: self.set_position("right"))
+        act_bottom.triggered.connect(lambda: self.set_position("bottom"))
+        act_float.triggered.connect(lambda: self.set_position("float"))
         menu.addAction(act_right)
         menu.addAction(act_bottom)
+        menu.addAction(act_float)
         return menu
+
+    def setup_splitter(self) -> None:
+        self.setParent(self.window_widget)
+        self.splitter = InspectorSplitter(self.window_widget)
+        self.splitter.addWidget(self.target_widget)
+        self.splitter.addWidget(self)
+        self.splitter.equalize_sizes()
+        self.window_widget.layout().insertWidget(self.original_pos, self.splitter, 1)
+
+    def float(self) -> None:
+        if self.isFloating:
+            return
+        self.isFloating = True
+        self.window_widget.layout().insertWidget(self.original_pos, self.target_widget)
+        self.setParent(None)
+        self.splitter.close()
+        self.show()
+
+    def unfloat(self) -> None:
+        if not self.isFloating:
+            return
+        self.setup_splitter()
+        self.isFloating = False
+
+    def set_position(self, where: str) -> None:
+        """where: right | bottom | float"""
+        if where == "right":
+            self.unfloat()
+            self.splitter.setOrientation(qt.Qt.Orientation.Horizontal)
+            self.splitter.equalize_sizes()
+        elif where == "bottom":
+            self.unfloat()
+            self.splitter.setOrientation(qt.Qt.Orientation.Vertical)
+            self.splitter.equalize_sizes()
+        elif where == "float":
+            self.float()

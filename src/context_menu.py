@@ -38,9 +38,6 @@ def inspect_sub_window(
         )
         inspector = SubWindowInspector(window_widget, target_widget, insert_pos)
         inspector.set_page(inspected_page)
-        layout: qt.QBoxLayout = window_widget.layout()
-        layout.insertWidget(insert_pos, inspector.splitter, 1)
-
 
 def on_webview_will_show_context_menu(webview: AnkiWebView, menu: qt.QMenu) -> None:
     window = webview.window()

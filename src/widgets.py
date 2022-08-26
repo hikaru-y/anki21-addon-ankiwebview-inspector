@@ -44,17 +44,6 @@ class InspectorSplitter(qt.QSplitter):
         self.setChildrenCollapsible(False)
         self.setOrientation(qt.Qt.Orientation.Vertical)
 
-    def set_orientation(self, where: str) -> None:
-        """where: right | bottom"""
-        new_orientation: qt.Qt.Orientation
-        if where == "right":
-            new_orientation = qt.Qt.Orientation.Horizontal
-        elif where == "bottom":
-            new_orientation = qt.Qt.Orientation.Vertical
-
-        self.setOrientation(new_orientation)
-        self.equalize_sizes()
-
     def equalize_sizes(self) -> None:
         # https://stackoverflow.com/questions/43831474/how-to-equally-distribute-the-width-of-qsplitter
         self.setSizes([10000, 10000])
