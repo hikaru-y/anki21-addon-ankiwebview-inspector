@@ -23,17 +23,16 @@ class InspectorDock(qt.QDockWidget):
             | qt.Qt.DockWidgetArea.BottomDockWidgetArea
         )
 
-    def toggle_area(self) -> None:
-        """Right <-> Bottom"""
-        if self.isFloating():
-            self.setFloating(False)
-        else:
-            new_area = (
-                self.parent.dockWidgetArea(self)  # current area
-                ^ qt.Qt.DockWidgetArea.RightDockWidgetArea
-                ^ qt.Qt.DockWidgetArea.BottomDockWidgetArea
-            )
-            self.parent.addDockWidget(new_area, self)
+    def set_area(self, where: str) -> None:
+        """where: right | bottom | float"""
+        new_area = self.parent.dockWidgetArea(self)
+        if where == "right":
+            new_area = qt.Qt.DockWidgetArea.RightDockWidgetArea
+        elif where == "bottom":
+            new_area = qt.Qt.DockWidgetArea.BottomDockWidgetArea
+
+        self.setFloating(where == "float")
+        self.parent.addDockWidget(new_area, self)
 
 
 class InspectorSplitter(qt.QSplitter):
@@ -45,13 +44,14 @@ class InspectorSplitter(qt.QSplitter):
         self.setChildrenCollapsible(False)
         self.setOrientation(qt.Qt.Orientation.Vertical)
 
-    def toggle_orientation(self) -> None:
-        """Right <-> Bottom"""
-        new_orientation = (
-            self.orientation()
-            ^ qt.Qt.Orientation.Vertical
-            ^ qt.Qt.Orientation.Horizontal
-        )
+    def set_orientation(self, where: str) -> None:
+        """where: right | bottom"""
+        new_orientation: qt.Qt.Orientation
+        if where == "right":
+            new_orientation = qt.Qt.Orientation.Horizontal
+        elif where == "bottom":
+            new_orientation = qt.Qt.Orientation.Vertical
+
         self.setOrientation(new_orientation)
         self.equalize_sizes()
 

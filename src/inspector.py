@@ -78,10 +78,10 @@ class BaseInspector(qt.QWidget):
 
         position_button = qt.QPushButton(self)
         position_button.setFocusPolicy(qt.Qt.FocusPolicy.NoFocus)
-        position_button.setMaximumSize(button_size)
         position_button.setIcon(get_icon("icon/position.svg"))
-        position_button.setToolTip("Toggle position (right/bottom)")
-        position_button.clicked.connect(self.on_position_button_clicked)
+        position_button.setToolTip("Change Position")
+        position_menu = self.setup_position_menu()
+        position_button.setMenu(position_menu)
         hbox.addWidget(position_button)
 
         close_button = qt.QPushButton(self)
@@ -144,9 +144,18 @@ class MainWindowInspector(BaseInspector):
     def on_close_button_clicked(self) -> None:
         self.dock.close()
 
-    @qt.pyqtSlot()
-    def on_position_button_clicked(self) -> None:
-        self.dock.toggle_area()
+    def setup_position_menu(self) -> qt.QMenu:
+        menu = qt.QMenu(self)
+        act_right = qt.QAction("Right", menu)
+        act_bottom = qt.QAction("Bottom", menu)
+        act_float = qt.QAction("Float", menu)
+        act_right.triggered.connect(lambda: self.dock.set_area("right"))
+        act_bottom.triggered.connect(lambda: self.dock.set_area("bottom"))
+        act_float.triggered.connect(lambda: self.dock.set_area("float"))
+        menu.addAction(act_right)
+        menu.addAction(act_bottom)
+        menu.addAction(act_float)
+        return menu
 
 
 class SubWindowInspector(BaseInspector):
@@ -166,10 +175,6 @@ class SubWindowInspector(BaseInspector):
 
         self.original_pos = original_pos
 
-    @qt.pyqtSlot()
-    def on_position_button_clicked(self) -> None:
-        self.splitter.toggle_orientation()
-
     def _on_load_finished(self) -> None:
         self.set_label(f"Inspector({self.inspected_page.title()})")
         self.inspect_element()
@@ -181,3 +186,13 @@ class SubWindowInspector(BaseInspector):
         self.close()
         self.window_widget.layout().insertWidget(self.original_pos, self.target_widget)
         self.splitter.close()
+
+    def setup_position_menu(self) -> qt.QMenu:
+        menu = qt.QMenu(self)
+        act_right = qt.QAction("Right", menu)
+        act_bottom = qt.QAction("Bottom", menu)
+        act_right.triggered.connect(lambda: self.splitter.set_orientation("right"))
+        act_bottom.triggered.connect(lambda: self.splitter.set_orientation("bottom"))
+        menu.addAction(act_right)
+        menu.addAction(act_bottom)
+        return menu
