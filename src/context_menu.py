@@ -7,7 +7,7 @@ from aqt.webview import AnkiWebView
 from . import consts
 from .inspector import MainWindowInspector, SubWindowInspector
 from .widgets import InspectorDock
-from .window_info import windows
+from .window_info import windows, WindowInfo
 
 
 def inspect_main_window(inspected_page: webview.AnkiWebPage) -> None:
@@ -44,23 +44,25 @@ def inspect_sub_window(
 
 def on_webview_will_show_context_menu(webview: AnkiWebView, menu: qt.QMenu) -> None:
     window = webview.window()
-    if window_info := next(
-        (i for i in windows if type(window) is i.get_widget()), None
-    ):
-        if window_info.main_window:
-            # mw.web, mw.bottomWeb, mw.toolbarWeb
-            menu.addAction(
-                consts.CONTEXT_MENU_ITEM_LABEL,
-                lambda: inspect_main_window(webview.page()),
-            )
-        else:
-            # clayout, previewer, stats, etc.
-            target: qt.QWidget = getattr(window, window_info.target, webview)
-            insert_pos = window_info.insert_pos
-            menu.addAction(
-                consts.CONTEXT_MENU_ITEM_LABEL,
-                lambda: inspect_sub_window(webview.page(), window, target, insert_pos),
-            )
+
+    window_info = next(
+        (i for i in windows if type(window) is i.get_widget()), WindowInfo("Unknown")
+    )
+
+    if window_info.main_window:
+        # mw.web, mw.bottomWeb, mw.toolbarWeb
+        menu.addAction(
+            consts.CONTEXT_MENU_ITEM_LABEL,
+            lambda: inspect_main_window(webview.page()),
+        )
+    else:
+        # clayout, previewer, stats, etc.
+        target: qt.QWidget = getattr(window, window_info.target, webview)
+        insert_pos = window_info.insert_pos
+        menu.addAction(
+            consts.CONTEXT_MENU_ITEM_LABEL,
+            lambda: inspect_sub_window(webview.page(), window, target, insert_pos),
+        )
 
 
 def on_editor_will_show_context_menu(
