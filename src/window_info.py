@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from operator import attrgetter
+from typing import Callable, Union
 
 import aqt
 from aqt import qt
@@ -12,7 +13,7 @@ from .logger import logger
 @dataclass
 class WindowInfo:
     dotted_attr: str
-    target: str = ""
+    target: Union[str, Callable[[qt.QWidget], qt.QWidget]] = ""
     insert_pos: int = 0
     main_window: bool = False
 
@@ -34,4 +35,7 @@ windows = (
     WindowInfo(dotted_attr="emptycards.EmptyCardsDialog"),
     WindowInfo(dotted_attr="fields.FieldDialog"),
     WindowInfo(dotted_attr="stats.NewDeckStats"),
+    WindowInfo(
+        dotted_attr="addons.ConfigEditor", target=lambda window: window.form.splitter
+    ),
 )

@@ -55,7 +55,11 @@ def on_webview_will_show_context_menu(webview: AnkiWebView, menu: qt.QMenu) -> N
             )
         else:
             # clayout, previewer, stats, etc.
-            target: qt.QWidget = getattr(window, window_info.target, webview)
+            target: qt.QWidget
+            if isinstance(window_info.target, str):
+                target = getattr(window, window_info.target, webview)
+            else:
+                target = window_info.target(window)
             insert_pos = window_info.insert_pos
             menu.addAction(
                 consts.CONTEXT_MENU_ITEM_LABEL,
