@@ -1,1 +1,2 @@
 aqt[qt5]
+PyQt5-stubs
