@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from aqt import gui_hooks, mw, qt, webview
+from typing import cast
+
+from aqt import gui_hooks, mw, qt
 
 from .logger import log_widget_destroyed, logger
 from .utils import get_icon
@@ -8,8 +10,8 @@ from .widgets import InspectorDock, InspectorSplitter
 
 
 class BaseInspector(qt.QWidget):
-    inspected_page: webview.AnkiWebPage
-    label = qt.QLabel
+    inspected_page: qt.QWebEnginePage
+    label: qt.QLabel
 
     def __init__(self, parent: qt.QWidget) -> None:
         super().__init__(parent)
@@ -28,14 +30,17 @@ class BaseInspector(qt.QWidget):
         vbox.addWidget(self.webview)
         self.setLayout(vbox)
 
-    def set_page(self, inspected_page: webview.AnkiWebPage) -> None:
+    def set_page(self, inspected_page: qt.QWebEnginePage) -> None:
         self.inspected_page = inspected_page
+        page = self.webview.page()
+        assert page is not None
+
         # web channel
         channel = self.inspected_page.webChannel()
-        self.webview.page().setWebChannel(channel)
+        page.setWebChannel(channel)
 
         self.webview.loadFinished.connect(self.on_load_finished)
-        self.webview.page().setInspectedPage(self.inspected_page)
+        page.setInspectedPage(self.inspected_page)
 
     @qt.pyqtSlot(bool)
     def on_load_finished(self, ok: bool) -> None:
@@ -50,7 +55,8 @@ class BaseInspector(qt.QWidget):
     def on_zoom_spinbox_value_changed(self, value: int) -> None:
         self.webview.setZoomFactor(value / 100)
         # https://stackoverflow.com/questions/12892129/how-to-prevent-qspinbox-from-automatically-highlighting-contents
-        self.zoom_spinbox.lineEdit().deselect()
+        if line_edit := self.zoom_spinbox.lineEdit():
+            line_edit.deselect()
 
     def create_topbar(self) -> qt.QHBoxLayout:
         hbox = qt.QHBoxLayout()
@@ -67,7 +73,7 @@ class BaseInspector(qt.QWidget):
         self.zoom_spinbox.setSingleStep(10)
         self.zoom_spinbox.setToolTip("Zoom level")
         self.zoom_spinbox.setSuffix(" %")
-        self.zoom_spinbox.valueChanged.connect(
+        self.zoom_spinbox.valueChanged.connect(  # type: ignore
             self.on_zoom_spinbox_value_changed, qt.Qt.ConnectionType.QueuedConnection
         )
         hbox.addWidget(self.zoom_spinbox)
@@ -101,9 +107,19 @@ class BaseInspector(qt.QWidget):
         self.label.setText(text)
         self.label.setToolTip(text)
 
+    @qt.pyqtSlot()
+    def on_close_button_clicked(self) -> None:
+        raise NotImplementedError
+
+    @qt.pyqtSlot()
+    def on_position_button_clicked(self) -> None:
+        raise NotImplementedError
+
 
 class MainWindowInspector(BaseInspector):
     def __init__(self) -> None:
+        assert mw is not None
+
         self.dock = InspectorDock(mw)
         super().__init__(parent=self.dock)
 
@@ -133,6 +149,8 @@ class MainWindowInspector(BaseInspector):
             self.add_dock_to_mw()
 
     def add_dock_to_mw(self) -> None:
+        assert mw is not None
+
         # It seems that this process needs to be done at the very end
         # in order to accurately highlight the right-clicked element.
         mw.addDockWidget(qt.Qt.DockWidgetArea.RightDockWidgetArea, self.dock)
@@ -179,5 +197,6 @@ class SubWindowInspector(BaseInspector):
     @qt.pyqtSlot()
     def on_close_button_clicked(self) -> None:
         self.close()
-        self.window_widget.layout().insertWidget(self.original_pos, self.target_widget)
+        layout = cast(qt.QBoxLayout, self.window_widget.layout())
+        layout.insertWidget(self.original_pos, self.target_widget)
         self.splitter.close()

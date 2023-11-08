@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import cast
+
 from aqt import qt
 
 from . import consts
@@ -12,7 +14,7 @@ class InspectorDock(qt.QDockWidget):
         self.setObjectName(consts.ADDON_NAME)
         self.setAttribute(qt.Qt.WidgetAttribute.WA_DeleteOnClose)
         log_widget_destroyed(self)
-        self.parent = parent
+        self.main_window = parent
 
         # make sure the panel is docked to main window at startup
         self.setFloating(False)
@@ -29,15 +31,16 @@ class InspectorDock(qt.QDockWidget):
             self.setFloating(False)
         else:
             new_area = (
-                self.parent.dockWidgetArea(self)  # current area
+                self.main_window.dockWidgetArea(self)  # current area
                 ^ qt.Qt.DockWidgetArea.RightDockWidgetArea
                 ^ qt.Qt.DockWidgetArea.BottomDockWidgetArea
             )
-            self.parent.addDockWidget(new_area, self)
+            new_area = cast(qt.Qt.DockWidgetArea, new_area)  # for PyQt5
+            self.main_window.addDockWidget(new_area, self)
 
 
 class InspectorSplitter(qt.QSplitter):
-    def __init__(self, parent: qt.QDialog) -> None:
+    def __init__(self, parent: qt.QWidget) -> None:
         super().__init__(parent)
         self.setObjectName(consts.ADDON_NAME)
         self.setAttribute(qt.Qt.WidgetAttribute.WA_DeleteOnClose)
@@ -52,6 +55,7 @@ class InspectorSplitter(qt.QSplitter):
             ^ qt.Qt.Orientation.Vertical
             ^ qt.Qt.Orientation.Horizontal
         )
+        new_orientation = cast(qt.Qt.Orientation, new_orientation)  # for PyQt5
         self.setOrientation(new_orientation)
         self.equalize_sizes()
 
