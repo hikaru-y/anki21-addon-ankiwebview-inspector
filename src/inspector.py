@@ -16,6 +16,8 @@ class BaseInspector(qt.QWidget):
         self.setAttribute(qt.Qt.WidgetAttribute.WA_DeleteOnClose)
         log_widget_destroyed(self)
         self.webview = qt.QWebEngineView(self)
+        profile = qt.QWebEngineProfile("inspector", self)
+        self.webview.setPage(qt.QWebEnginePage(profile, self.webview))
         log_widget_destroyed(self.webview)
         self.setup_layout()
 
