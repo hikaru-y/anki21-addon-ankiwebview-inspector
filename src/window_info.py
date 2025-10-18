@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from operator import attrgetter
-from typing import Callable, Union
 
 import aqt
 from aqt import qt
@@ -13,7 +13,7 @@ from .logger import logger
 @dataclass
 class WindowInfo:
     dotted_attr: str
-    target: Union[str, Callable[[qt.QWidget], qt.QWidget]] = ""
+    target: str | Callable[[qt.QWidget], qt.QWidget] = ""
     insert_pos: int = 0
     main_window: bool = False
 

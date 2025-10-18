@@ -1,3 +1,11 @@
+[project]
+name = "hello-world"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = []
+
 [tool.black]
 line-length = 88
 
@@ -9,3 +17,26 @@ known_first_party = ["anki", "aqt"]
 [tool.mypy]
 python_version = "3.9"
 disallow_untyped_defs = true
+
+[dependency-groups]
+dev = [
+    "aqt>=25.9.2",
+    "mypy>=1.18.2",
+    "ruff>=0.14.1",
+]
+
+[tool.ruff.lint]
+select = [
+    # pycodestyle
+    "E",
+    # Pyflakes
+    "F",
+    # pyupgrade
+    "UP",
+    # flake8-bugbear
+    "B",
+    # flake8-simplify
+    "SIM",
+    # isort
+    "I",
+]

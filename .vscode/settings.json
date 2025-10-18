@@ -1,7 +1,7 @@
 {
     "[python]": {
         "editor.codeActionsOnSave": {
-            "source.organizeImports": true
+            "source.organizeImports": "explicit"
         }
     },
     "files.eol": "\n",
@@ -12,20 +12,12 @@
     },
     "files.insertFinalNewline": true,
     "git.ignoreLimitWarning": true,
-    "git.untrackedChanges": "hidden",
     "python.analysis.extraPaths": [
-        "C:/anki/qt/",
-        "C:/anki/pylib"
+        ".venv/Lib/site-packages"
     ],
-    "python.formatting.provider": "black",
-    "python.linting.enabled": true,
-    "python.linting.flake8Args": [
-        "--config=.flake8"
-    ],
-    "python.linting.flake8Enabled": true,
-    "python.linting.mypyEnabled": true,
     "search.exclude": {
         ".vscode/": true
     },
-    "workbench.editor.enablePreview": false
+    "workbench.editor.enablePreview": false,
+    "mypy-type-checker.cwd": "${workspaceFolder}/src",
 }
