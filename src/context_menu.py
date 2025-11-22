@@ -65,6 +65,11 @@ def on_webview_will_show_context_menu(webview: AnkiWebView, menu: qt.QMenu) -> N
                 consts.CONTEXT_MENU_ITEM_LABEL,
                 lambda: inspect_sub_window(webview.page(), window, target, insert_pos),
             )
+    else:
+        menu.addAction(
+            consts.CONTEXT_MENU_ITEM_LABEL,
+            lambda: inspect_sub_window(webview.page(), window, webview, 0),
+        )
 
 
 def on_editor_will_show_context_menu(
