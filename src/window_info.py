@@ -2,40 +2,47 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from operator import attrgetter
-from typing import Callable, Union
+from typing import TYPE_CHECKING
 
 import aqt
 from aqt import qt
 
 from .logger import logger
 
+if TYPE_CHECKING:
+    from aqt.webview import AnkiWebView
+
 
 @dataclass
 class WindowInfo:
-    dotted_attr: str
-    target: Union[str, Callable[[qt.QWidget], qt.QWidget]] = ""
+    window_attr: str
+    target_attr: str = ""
     insert_pos: int = 0
     main_window: bool = False
 
-    def get_widget(self) -> qt.Qwidget | None:
+    def get_widget(self) -> qt.QWidget | None:
         try:
-            return attrgetter(self.dotted_attr)(aqt)
+            return attrgetter(self.window_attr)(aqt)
         except Exception as e:
             logger.debug(e)
             return None
 
+    def get_target(self, window: qt.QWidget, webview: AnkiWebView) -> qt.QWidget:
+        if self.target_attr:
+            return attrgetter(self.target_attr)(window)
+        else:
+            return webview
+
 
 windows = (
-    WindowInfo(dotted_attr="main.AnkiQt", main_window=True),
-    WindowInfo(dotted_attr="browser.card_info.CardInfoDialog"),
-    WindowInfo(dotted_attr="browser.previewer.BrowserPreviewer"),
-    WindowInfo(dotted_attr="changenotetype.ChangeNotetypeDialog"),
-    WindowInfo(dotted_attr="clayout.CardLayout", target="mainArea", insert_pos=1),
-    WindowInfo(dotted_attr="deckoptions.DeckOptionsDialog"),
-    WindowInfo(dotted_attr="emptycards.EmptyCardsDialog"),
-    WindowInfo(dotted_attr="fields.FieldDialog"),
-    WindowInfo(dotted_attr="stats.NewDeckStats"),
-    WindowInfo(
-        dotted_attr="addons.ConfigEditor", target=lambda window: window.form.splitter
-    ),
+    WindowInfo(window_attr="main.AnkiQt", main_window=True),
+    WindowInfo(window_attr="browser.card_info.CardInfoDialog"),
+    WindowInfo(window_attr="browser.previewer.BrowserPreviewer"),
+    WindowInfo(window_attr="changenotetype.ChangeNotetypeDialog"),
+    WindowInfo(window_attr="clayout.CardLayout", target_attr="mainArea", insert_pos=1),
+    WindowInfo(window_attr="deckoptions.DeckOptionsDialog"),
+    WindowInfo(window_attr="emptycards.EmptyCardsDialog"),
+    WindowInfo(window_attr="fields.FieldDialog"),
+    WindowInfo(window_attr="stats.NewDeckStats"),
+    WindowInfo(window_attr="addons.ConfigEditor", target_attr="form.splitter"),
 )
