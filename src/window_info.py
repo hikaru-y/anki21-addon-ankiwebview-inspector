@@ -12,12 +12,16 @@ from .logger import logger
 
 @dataclass
 class WindowInfo:
-    dotted_attr: str
+    dotted_attr: str | None = None
     target: Union[str, Callable[[qt.QWidget], qt.QWidget]] = ""
     insert_pos: int = 0
     main_window: bool = False
 
-    def get_widget(self) -> qt.Qwidget | None:
+    @property
+    def widget_class(self) -> type[qt.QWidget] | None:
+        if not self.dotted_attr:
+            return None
+
         try:
             return attrgetter(self.dotted_attr)(aqt)
         except Exception as e:
